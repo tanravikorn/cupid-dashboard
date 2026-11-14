@@ -86,7 +86,18 @@ export function parseInsightsFilterQuery(
   return { ok: true, query: query.toString() };
 }
 
-function parseDateWindow(
+export function parseDateRangeQuery(
+  params: URLSearchParams,
+): { ok: true; query: string } | { ok: false; message: string } {
+  const window = parseDateWindow(params);
+  if (!window.ok) return window;
+  return {
+    ok: true,
+    query: new URLSearchParams({ from: window.from, to: window.to }).toString(),
+  };
+}
+
+export function parseDateWindow(
   params: URLSearchParams,
 ):
   | { ok: true; from: string; to: string }
@@ -215,10 +226,14 @@ const profileFilterKeys: Array<keyof Omit<InsightsFilters, "from" | "to">> = [
   "interest",
 ];
 
-export function countActiveProfileFilters(params: URLSearchParams): number {
+export function countActiveProfileFilters(
+  source: URLSearchParams | Partial<InsightsFilters>,
+): number {
   let count = 0;
   for (const key of profileFilterKeys) {
-    if (params.get(key)) count += 1;
+    const value =
+      source instanceof URLSearchParams ? source.get(key) : source[key];
+    if (value) count += 1;
   }
   return count;
 }
